@@ -342,7 +342,6 @@ function render(){
         <div class="galwrap">
           <div class="gallery" tabindex="0" aria-label="Photos de ${esc(g.name)}">${g.photos.map((p,i)=>slideHTML(p,i,g.photos.length)).join("")}</div>
           <span class="counter" aria-live="polite">1 / ${g.photos.length}</span>
-          <span class="award" data-award="${g.id}" hidden></span>
           <button class="galnav prev" type="button" aria-label="Photo précédente" disabled>‹</button>
           <button class="galnav next" type="button" aria-label="Photo suivante">›</button>
         </div>
