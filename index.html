@@ -168,7 +168,18 @@ table.votes tr:last-child td{border-bottom:0}
 .demo-note{font-size:14px;color:var(--ochre);margin:0 0 14px}
 @media (max-width:860px){.vote{padding:20px}.when{grid-template-columns:minmax(0,1fr)}}
 .famillebox{background:var(--surface);border:2px solid var(--heather);border-radius:22px;padding:22px 24px;margin:0 0 20px;scroll-margin-top:calc(16px + env(safe-area-inset-top,0px))}
-.famillebox h2{font-size:26px;margin:0 0 6px}
+[hidden]{display:none !important}
+.cta .famillebox{margin:0;max-width:520px;padding:18px 22px 16px}
+.cta .famillebox select#f-famille{width:100%}
+@keyframes unfold{from{opacity:0;transform:translateY(-8px);clip-path:inset(0 0 100% 0)}to{opacity:1;transform:none;clip-path:inset(0 0 0 0)}}
+@media (prefers-reduced-motion: no-preference){.cta .famillebox:not([hidden]){animation:unfold .28s ease-out}}
+.fam-label{display:block;font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:22px;font-weight:700;margin:0 0 8px}
+.toastwrap{position:fixed;left:0;right:0;bottom:0;padding:0 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;pointer-events:none;z-index:20}
+.toast{max-width:480px;padding:12px 18px;border-radius:14px;font-weight:700;font-size:15px;box-shadow:0 6px 18px rgba(0,0,0,.25);opacity:0;transform:translateY(8px)}
+.toast.ok{background:var(--lichen);color:var(--surface)}
+.toast.err{background:var(--ochre);color:var(--surface)}
+.toast.show{opacity:1;transform:none}
+@media (prefers-reduced-motion: no-preference){.toast{transition:opacity .2s ease,transform .2s ease}}
 .famillebox select#f-famille{font-size:17px;font-weight:700;max-width:360px;margin:0 0 6px}
 #fam-details{margin-top:18px}
 @keyframes attn{0%{box-shadow:0 0 0 0 var(--heather)}100%{box-shadow:0 0 0 16px transparent}}
@@ -200,16 +211,18 @@ table.votes tr:last-child td{border-bottom:0}
     <div><dt>Le budget visé</dt><dd>Environ 2 900 € pour 6 nuits</dd></div>
     <div><dt>Ce que comprennent les prix</dt><dd>Taxe de séjour, ménage et chauffage</dd></div>
   </dl>
-  <p class="cta"><a class="btn" href="#famille">Voter pour ma famille</a></p>
+  <div class="cta">
+    <button class="btn" type="button" id="vote-open">Voter pour ma famille</button>
+    <div class="famillebox" id="famille" hidden>
+      <label for="f-famille" class="fam-label">Qui vote ?</label>
+      <select id="f-famille"><option value="">Choisir ma famille…</option></select>
+      <p class="status-msg" id="f-status" role="status"></p>
+    </div>
+  </div>
   <p class="note">Draps et serviettes sont à apporter partout, sauf mention contraire. Les prix précédés de « ~ » et les temps de trajet sont des estimations ; les autres viennent des devis reçus.</p>
 </header>
 
 <main class="wrap">
-  <section class="famillebox" id="famille" aria-labelledby="fam-title">
-    <h2 id="fam-title">Qui vote ?</h2>
-    <select id="f-famille" aria-label="Famille pour laquelle vous votez"><option value="">Choisir ma famille…</option></select>
-    <p class="status-msg" id="f-status" role="status"></p>
-  </section>
   <p class="count" id="count"></p>
   <div id="list"></div>
 
@@ -229,6 +242,7 @@ table.votes tr:last-child td{border-bottom:0}
   </section>
 </main>
 <footer class="wrap">Site conçu pour la cousinade 2027 avec ❤️</footer>
+<div class="toastwrap" aria-live="polite"><div class="toast" id="toast" hidden></div></div>
 
 <script>
 const GITES = [
@@ -442,6 +456,7 @@ function mine(){
 function status(msg, kind){ const st = $("f-status"); st.className = "status-msg" + (kind ? " " + kind : ""); st.textContent = msg; }
 
 function initVote(){
+  $("vote-open").addEventListener("click", () => openVote(true));
   $("f-famille").innerHTML += FAMILLES.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join("");
   $("f-famille").addEventListener("change", e => {
     family = e.target.value;
@@ -470,7 +485,25 @@ function initVote(){
   else { status("Aperçu : vous pouvez essayer, mais rien n’est encore enregistré."); renderAll(); }
 }
 
+let toastTimer;
+function toast(msg, kind){
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast " + (kind || "ok");
+  t.hidden = false;
+  requestAnimationFrame(() => t.classList.add("show"));
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove("show"); setTimeout(() => { t.hidden = true; }, 250); }, 2600);
+}
+
+function openVote(focus){
+  $("vote-open").hidden = true;
+  $("famille").hidden = false;
+  if(focus) $("f-famille").focus();
+}
+
 function askFamily(){
+  openVote(false);
   const box = $("famille");
   box.scrollIntoView({behavior: reduceMotion ? "auto" : "smooth", block:"start"});
   box.classList.remove("attn"); void box.offsetWidth; box.classList.add("attn");
@@ -492,9 +525,11 @@ async function save(){
     const j = await r.json();
     if(!j.ok) throw new Error(j.erreur || "refus");
     status(`Enregistré pour la famille ${v.famille}.`, "ok");
+    toast(`✓ Vote enregistré pour la famille ${v.famille}`, "ok");
     loadVotes(true);
   }catch(err){
     status("L’enregistrement n’a pas abouti. Vérifiez votre connexion, puis refaites votre dernier choix.", "err");
+    toast("L’enregistrement n’a pas abouti. Réessayez.", "err");
   }
 }
 
