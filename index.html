@@ -169,6 +169,10 @@ table.votes tr:last-child td{border-bottom:0}
 @media (max-width:860px){.vote{padding:20px}.when{grid-template-columns:minmax(0,1fr)}}
 .famillebox{background:var(--surface);border:2px solid var(--heather);border-radius:22px;padding:22px 24px;margin:0 0 20px;scroll-margin-top:calc(16px + env(safe-area-inset-top,0px))}
 [hidden]{display:none !important}
+.votesec{border-top:1px solid var(--line);background:var(--surface-2);padding:20px 26px 24px}
+.votesec h3{font-size:19px;font-weight:700;margin:0 0 12px}
+.votesec .votebar{border-top:0;padding-top:0}
+@media (max-width:860px){.votesec{padding:18px 20px 22px}}
 .cta .famillebox{margin:0;max-width:520px;padding:18px 22px 16px}
 .cta .famillebox select#f-famille{width:100%}
 @keyframes unfold{from{opacity:0;transform:translateY(-8px);clip-path:inset(0 0 100% 0)}to{opacity:1;transform:none;clip-path:inset(0 0 0 0)}}
@@ -365,7 +369,6 @@ function render(){
           <p class="addr">${esc(g.addr)}</p>
           <p class="from"><b>${esc(g.from)}</b>${g.ref ? "en 2026" : "à partir de, pour 6 nuits"}</p>
           <dl class="facts">${factsFor(g, g.options ? g.options[0] : null)}</dl>
-          <div class="votebar" data-vote="${g.id}"></div>
           ${g.site ? `<p class="links"><a href="${g.site}" target="_blank" rel="noopener">Voir le site du gîte</a></p>` : ""}
         </div>
       </div>
@@ -378,6 +381,10 @@ function render(){
           ${pcHTML(g, g.options ? g.options[0] : null)}
         </section>
       </div>
+      <section class="votesec" aria-label="Mon avis sur ${esc(g.name)}">
+        <h3>Mon avis sur ${esc(g.name)}</h3>
+        <div class="votebar" data-vote="${g.id}"></div>
+      </section>
     </article>`).join("");
 
   GITES.filter(g => g.options).forEach(g => {
@@ -461,7 +468,7 @@ function initVote(){
   $("f-famille").addEventListener("change", e => {
     family = e.target.value;
     $("famille").classList.remove("attn");
-    status(family ? `Vous votez pour la famille ${family}.` : "");
+    status(family ? `Je vote pour la famille ${family}.` : "");
     renderAll();
   });
 
@@ -582,7 +589,7 @@ function paintCards(){
       const who = ok.length ? `<p class="who">Convient à : <b>${ok.map(esc).join(", ")}</b>${fav.length ? ` · Préféré de : <b>${fav.map(esc).join(", ")}</b>` : ""}</p>` : "";
       return `<div class="vrow">${title}
         <button class="vbtn ok" type="button" data-act="ok" data-key="${esc(k)}" aria-pressed="${okOn}">✓ ${g.options ? "Me convient" : "Ce gîte me convient"}<span class="cnt" aria-label="${plural(ok.length,"famille")}">${ok.length}</span></button>
-        <button class="vbtn fav" type="button" data-act="fav" data-key="${esc(k)}" aria-pressed="${favOn}">★ ${g.options ? "Notre préférée" : "Notre préféré"}<span class="cnt" aria-label="${plural(fav.length,"famille")}">${fav.length}</span></button>
+        <button class="vbtn fav" type="button" data-act="fav" data-key="${esc(k)}" aria-pressed="${favOn}">★ ${g.options ? "Ma préférée" : "Mon préféré"}<span class="cnt" aria-label="${plural(fav.length,"famille")}">${fav.length}</span></button>
         ${who}</div>`;
     }).join("");
   });
